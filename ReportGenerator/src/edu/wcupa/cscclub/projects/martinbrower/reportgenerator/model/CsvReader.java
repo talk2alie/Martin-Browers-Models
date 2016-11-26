@@ -25,10 +25,8 @@ public class CsvReader
     
     private ArrayList<Page> _pages;
     private int _pageCount;
-    private BufferedReader _reader;
+    private BufferedReader _reader;  
     
-    private final String SUMMARY_HEADER_PATTERN = 
-            "\\b(ROUTE|WRIN|TRAILER\\s*(POSITION|POS)|STOP|CASES|DESCRIPTION)\\s*:{1}\\s*\\,+\\w+\\b";
     
     // </editor-fold>
        
@@ -57,8 +55,9 @@ public class CsvReader
     // <editor-fold defaultstate="collapsed" desc="Helpers">
     
     private Map<String, String> getSummaryHeader(String line) {
-        
-        Pattern pattern = Pattern.compile(SUMMARY_HEADER_PATTERN);
+        String summaryHeaderPattern = 
+            "\\b(ROUTE|WRIN|TRAILER\\s*(POSITION|POS)|STOP|CASES|DESCRIPTION)\\s*:{1}\\s*\\,+\\w+\\b";
+        Pattern pattern = Pattern.compile(summaryHeaderPattern);
         Matcher matcher = pattern.matcher(line);
         
         Map<String, String> summaryHeaders = new HashMap<>();
@@ -87,7 +86,19 @@ public class CsvReader
     
     private Map<String, Integer> getColumnHeaders(String line)
     {
-        return new HashMap<>();
+        Map<String, Integer> columnHeaders = new HashMap<>();
+        
+        String columnHeaderPattern = "\\b(ROUTE|WRIN|TRAILER\\s*(POSITION|POS)|STOP|CASES|DESCRIPTION)\\b(?=\\s*\\,+)";
+        Pattern pattern = Pattern.compile(columnHeaderPattern);
+        Matcher matcher = pattern.matcher(line);
+        
+        while(matcher.find()){
+            String header = matcher.group();
+            int index = line.indexOf(header);
+            columnHeaders.put(header, index);
+        }
+        
+        return columnHeaders;
     }
     
     private Map<Integer, String> getData(String line)
