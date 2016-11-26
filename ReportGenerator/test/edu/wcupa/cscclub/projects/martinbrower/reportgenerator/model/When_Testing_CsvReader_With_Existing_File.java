@@ -6,6 +6,9 @@
 package edu.wcupa.cscclub.projects.martinbrower.reportgenerator.model;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -32,6 +35,10 @@ public class When_Testing_CsvReader_With_Existing_File
         catch (FileNotFoundException ex)
         {
             // TODO: Log failure somewhere
+            assertTrue(ex.getMessage(), false); // Test failed!
+        }
+        catch (IOException ex)
+        {
             assertTrue(ex.getMessage(), false); // Test failed!
         }
     }
