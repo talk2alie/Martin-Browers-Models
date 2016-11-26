@@ -15,10 +15,19 @@ import java.util.ArrayList;
  */
 public class CsvReader
 {
+    
+    // <editor-fold defaultstate="collapsed" desc="Fields">
+    
     private ArrayList<Page> _pages;
     private int _pageCount;
     private BufferedReader _reader;
-
+    
+    // </editor-fold>
+       
+    // <editor-fold defaultstate="collapsed" desc="Methods">
+    
+    // <editor-fold defaultstate="collapsed" desc="Constructors">
+            
     public CsvReader(String fileName) throws FileNotFoundException
     {
         FileReader reader = new FileReader(fileName);
@@ -26,4 +35,24 @@ public class CsvReader
         _pages = new ArrayList<>();
     }
     
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc="Getters">
+    
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc="Setters">
+    
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc="Helpers">
+    
+    
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc="Publics">
+    
+    // </editor-fold>    
+    
+    // </editor-fold>
 }
