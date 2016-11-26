@@ -26,7 +26,6 @@ public class CsvReader
     private ArrayList<Page> _pages;
     private int _pageCount;
     private BufferedReader _reader;
-    private Map<String, String> headers;
     
     private final String SUMMARY_HEADER_PATTERN = 
             "\\b(ROUTE|WRIN|TRAILER\\s*(POSITION|POS)|STOP|CASES|DESCRIPTION)\\s*:{1}\\s*\\,+\\w+\\b";
@@ -42,14 +41,7 @@ public class CsvReader
         FileReader reader = new FileReader(fileName);
         _reader = new BufferedReader(reader);
         _pages = new ArrayList<>();
-        headers = new HashMap<>();
-        String line;
-        while((line = _reader.readLine()) != null) {
-            Map<String, String> currentHeaders = getSummaryHeader(line);
-            if(currentHeaders.size() > 0) {
-                headers.putAll(currentHeaders);
-            }
-        }
+        processFile(_reader);
     }
     
     // </editor-fold>
@@ -79,6 +71,69 @@ public class CsvReader
         return summaryHeaders;
     }
     
+    private String getPageNumber(String line)
+    {
+        String pagePattern = "^\\bPage\\s*\\d+\\b";
+        Pattern pattern = Pattern.compile(pagePattern);
+        Matcher matcher = pattern.matcher(line);
+        
+        if(matcher.find()) {
+            String match = matcher.group();
+            String pageNumber = match.substring(match.indexOf(" ") + 1);
+            return pageNumber;                    
+        }        
+        return null;
+    }
+    
+    private Map<String, Integer> getColumnHeaders(String line)
+    {
+        return new HashMap<>();
+    }
+    
+    private Map<Integer, String> getData(String line)
+    {
+        return new HashMap<>();
+    }
+    
+    private void updatePageColumns(Page page, Map<Integer, String> row)
+    {
+        return;
+    }
+        
+    private void processFile(BufferedReader reader) throws IOException {
+        Page currentPage = null;
+        
+        String line;
+        while((line = _reader.readLine()) != null) {
+            if(currentPage == null) currentPage = new Page();
+            
+            String pageNumber = getPageNumber(line);
+            if(pageNumber != null && pageNumber.length() > 0) {
+                currentPage.setNumber(Integer.parseInt(pageNumber.trim()));
+                _pages.add(currentPage);
+                currentPage = null;
+                continue;
+            }
+            
+            Map<String, String> currentSummaryHeaders = getSummaryHeader(line);
+            if(currentSummaryHeaders.size() > 0) {
+                currentPage.getSummaryHeaders().putAll(currentSummaryHeaders);
+                continue;
+            }
+            
+            Map<String, Integer> currentColumnHeaders = getColumnHeaders(line);
+            if(currentColumnHeaders.size() > 0) {
+                currentPage.getColumnHeaders().putAll(currentColumnHeaders);
+                continue;
+            }
+            
+            Map<Integer, String> dataRow = getData(line);
+            if(dataRow.size() > 0) {
+                updatePageColumns(currentPage, dataRow);
+            }
+        }
+    }
+    
     // </editor-fold>
     
     // <editor-fold defaultstate="collapsed" desc="Publics">
@@ -86,4 +141,6 @@ public class CsvReader
     // </editor-fold>    
     
     // </editor-fold>
+
+    
 }
