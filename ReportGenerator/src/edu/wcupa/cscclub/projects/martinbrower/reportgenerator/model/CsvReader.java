@@ -76,7 +76,7 @@ public class CsvReader
         COLUMN_HEADER_PATTERN = Pattern.compile("^,+(ROUTE|WRIN|TRAILER\\s*(POSITION|POS)|STOP|CASES|DESCRIPTION)+\\,+.*$");
         DATA_ROW_PATTERN = Pattern.compile("^,*(\\b(?:\\d*\\.)?\\d+\\b\\,+)+\\b(\\w+(\\s|[\\/\\-\\_])?)+\\b\\s*\\,+(\\b(?:\\d*\\.)?\\d+\\b\\,+)\\b\\w+\\b\\,+.*\\b(\\b(?:\\d*\\.)?\\d+\\b)\\,*$");
         // CART_TOTAL_PATTERN = Pattern.compile("^CART TOTAL\\,*(?:\\d*\\.)?\\d+");
-        CART_TOTAL_PATTERN = Pattern.compile("^(CART TOTAL\\,*(?:\\d*\\.)?\\d+)|^\\,+(?:\\d*\\.)?\\d+");
+        CART_TOTAL_PATTERN = Pattern.compile("^CART\\sTOTAL\\,+(?:\\d*\\.)?\\d+(?=\\,+$)|^\\,+(?:\\d*\\.)?\\d+(?=\\,+$)");
         PAGE_NUMBER_PATTERN = Pattern.compile("^\\bPage\\s*\\d+\\b");
     }
 
