@@ -5,38 +5,38 @@
 package edu.wcupa.cscclub.projects.martinbrower.reportgenerator.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
  * @author Mohamed Alie Pussah (mp754927@wcupa.edu)
- * Holds information about a single page; either 
+ * Encapsulates data for a single page; either 
  * from a parsed CSV file, or from a generated 
  * report
  */
 public class Page
 {
     private int _number;
-    private int _cartTotal;
-    private Map<String, String> _summaryHeaders;
-    private Map<String, Integer> _columnHeaders;
-    private Map<String, ArrayList<String>> _columns;
+    private int _cartTotal;    
+    private final ArrayList<Column> _columns;
     
-    public Page() {
-        _summaryHeaders = new HashMap<>();
-        _columnHeaders = new HashMap<>();
-        _columns = new HashMap<>();
-    }
-
     /**
-     * Gets the cart total, or the sum of the CASES column as read from the CSV 
-     * file or as calculated from the generated report. This value can be used 
-     * to determine whether or not a report generated from this page instance 
-     * will have one or more sections. If this value is higher than 21, the 
-     * generated report from this page will have more that one section and the 
-     * value of this field in those sections are guaranteed to be 21 or less
-     * @return the _cartTotal
+     * The summary rows on this page
+     */
+    public final Map<String, String> SUMMARIES;
+    
+    /**
+     * Creates a new page in a report or in a parsed CSV file
+     */
+    public Page() {
+        SUMMARIES = new HashMap<>();
+        _columns = new ArrayList<>();
+    }
+    
+    /**
+     * Gets the CART TOTAL as read from the CSV file
+     * @return The CART TOTAL as read from the CSV file
      */
     public int getCartTotal()
     {
@@ -44,39 +44,30 @@ public class Page
     }
 
     /**
-     * Sets the cart total or the sum of the CASES field as read from the CSV 
-     * file or as calculated from the generated report 
-     * @param cartTotal the cartTotal to set
+     * Sets the CART TOTAL as read from the CSV file
+     * @param cartTotal The CART TOTAL as read from the CSV file
      */
     public void setCartTotal(int cartTotal)
     {
         this._cartTotal = cartTotal;
     }
-
+    
     /**
-     * Gets all required column headers from the CSV file
-     * @return the column headers found in the CSV file, and based on the 
-     * predefined values requested by Martin Browers
+     * Gets all required columns based on the specified needed columns
+     * @return The required columns from the CSV file, sorted in 
+     * ascending order of their header cells
      */
-    public Map<String, Integer> getColumnHeaders()
+    public ArrayList<Column> getColumns()
     {
-        return _columnHeaders;
-    }
-
-    /**
-     * Gets all required columns, both header and data, as defined by Martin 
-     * Browers
-     * @return the columns from the CSV file
-     */
-    public Map<String, ArrayList<String>> getColumns()
-    {
+        Collections.sort(_columns);
         return _columns;
     }
 
     /**
-     * Gets the number of this instance either relative to other pages in the 
-     * CSV file, or relative to other sections in the generated report
-     * @return the _number
+     * Gets the cardinal number of this page. If this is the last page in 
+     * a CSV file, this value represents the number of pages in that CSV 
+     * file
+     * @return The cardinal number of this page
      */
     public int getNumber()
     {
@@ -84,23 +75,11 @@ public class Page
     }
 
     /**
-     * Sets the number of this page, either relative to other pages in the 
-     * CSV file, or relative to other sections in the generated report
-     * @param number the number to assign this page
+     * Sets the cardinal number of this page
+     * @param number The cardinal number of this page
      */
     public void setNumber(int number)
     {
         this._number = number;
-    }
-
-    /**
-     * Gets all summary headers, including their data, as defined by Martin 
-     * Browers
-     * @return the summary headers found in the CSV file
-     */
-    public Map<String, String> getSummaryHeaders()
-    {
-        return _summaryHeaders;
-    }
-    
+    }    
 }
