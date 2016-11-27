@@ -19,6 +19,8 @@ public class When_Testing_CsvReader_With_Existing_File
     private final int _expectedPageCount;
     
     public When_Testing_CsvReader_With_Existing_File() {
+//        _fileName = "C:\\Users\\talk2\\Desktop\\Files\\BunManifest2.csv";
+//        _expectedPageCount = 90;
         _fileName = "C:\\Users\\talk2\\Desktop\\Files\\Report1.csv";
         _expectedPageCount = 295;
     }
@@ -53,5 +55,24 @@ public class When_Testing_CsvReader_With_Existing_File
             //TODO: Log the exception
             assertTrue(ex.getMessage(), false); // Test failed! :-(
         }        
-    }    
+    } 
+    
+    @Test
+    public void instance_pages_must_each_have_at_least_one_cell_in_each_column() {
+        try {
+            
+            CsvReader reader = new CsvReader(_fileName);
+            boolean eachColumnHasAtLeastOnceCell = false;
+            for(Page page : reader.PAGES) {
+                for(Column column : page.getColumns()){
+                    eachColumnHasAtLeastOnceCell = column.CELLS.size() > 0;
+                }
+            }
+            assertTrue(eachColumnHasAtLeastOnceCell);
+        }
+        catch (IOException ex) {
+            //TODO: Log the exception
+            assertTrue(ex.getMessage(), false); // Test failed! :-(
+        }
+    }
 }
