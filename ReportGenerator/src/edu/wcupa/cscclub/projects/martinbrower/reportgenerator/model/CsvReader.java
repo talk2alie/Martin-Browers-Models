@@ -77,7 +77,7 @@ public class CsvReader
         DATA_ROW_PATTERN = Pattern.compile("^,*(\\b(?:\\d*\\.)?\\d+\\b\\,+)+\\b(\\w+(\\s|[\\/\\-\\_])?)+\\b\\s*\\,+(\\b(?:\\d*\\.)?\\d+\\b\\,+)\\b\\w+\\b\\,+.*\\b(\\b(?:\\d*\\.)?\\d+\\b)\\,*$");
         // CART_TOTAL_PATTERN = Pattern.compile("^CART TOTAL\\,*(?:\\d*\\.)?\\d+");
         CART_TOTAL_PATTERN = Pattern.compile("^CART\\sTOTAL\\,+(?:\\d*\\.)?\\d+(?=\\,+$)|^\\,+(?:\\d*\\.)?\\d+(?=\\,+$)");
-        PAGE_NUMBER_PATTERN = Pattern.compile("^\\bPage\\s*\\d+\\b");
+        PAGE_NUMBER_PATTERN = Pattern.compile("^\\bPage\\s\\d+\\b(?=\\s*of\\,+\\d+\\,+.*$)");
     }
 
     private Map<String, String> getSummaryHeader(String line) {
@@ -147,15 +147,13 @@ public class CsvReader
                 if (data == null || "".equals(data)) {
                     continue;
                 }
-
-                int positionDifference
-                        = Math.abs(dataColumn - column.HEADER.COLUMN);
-                if (positionDifference == 0 || positionDifference == 1) {
-                    Cell dataCell
-                            = new Cell(_rowCount, column.HEADER.COLUMN, data);
-                    column.CELLS.add(dataCell);
-                    break;
+                
+                if (Math.abs(dataColumn - column.HEADER.COLUMN) > 1) {
+                    continue;
                 }
+                column.CELLS.add(new Cell(_rowCount, 
+                        column.HEADER.COLUMN, data));
+                break;
             }
         }
         return true;
@@ -174,9 +172,8 @@ public class CsvReader
         if (!matcher.find()) {
             return;
         }
-        page.setCartTotal(Integer.parseInt(
-                matcher.group().substring(matcher.group()
-                       .lastIndexOf(",") + 1)));
+        page.setCartTotal(Integer.parseInt(matcher.group()
+            .substring(matcher.group().lastIndexOf(",") + 1)));
     }
 
     private void processFile(BufferedReader reader) throws IOException {
