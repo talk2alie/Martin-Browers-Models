@@ -3,6 +3,7 @@
  */
 package edu.wcupa.cscclub.projects.martinbrower.reportgenerator.model;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import static org.junit.Assert.*;
  */
 public class When_Testing_CsvReader_With_Existing_File
 {
+
     private final String _fileName;
     // This value should reflect the number of pages in the CSV file
     // We also have to make this value dynamic based on the CSV file    
@@ -20,10 +22,10 @@ public class When_Testing_CsvReader_With_Existing_File
     private final boolean _expectCartTotal;
 
     public When_Testing_CsvReader_With_Existing_File() {
-//        _fileName = "C:\\Users\\talk2\\Desktop\\Files\\BunManifest2.csv";
-//        _expectedPageCount = 90;
-        _fileName = "C:\\Users\\talk2\\Desktop\\Files\\Report1.csv";
-        _expectedPageCount = 295;
+        _fileName = "C:\\Users\\talk2\\Desktop\\Files\\BunManifest2.csv";
+        _expectedPageCount = 90;
+//        _fileName = "C:\\Users\\talk2\\Desktop\\Files\\Report1.csv";
+//        _expectedPageCount = 295;
         _expectCartTotal = true;
     }
 
@@ -73,7 +75,7 @@ public class When_Testing_CsvReader_With_Existing_File
             assertTrue(ex.getMessage(), false); // Test failed! :-(
         }
     }
-    
+
     @Test
     public void instance_pages_should_each_have_cart_total_above_zero() {
         try {
@@ -88,6 +90,21 @@ public class When_Testing_CsvReader_With_Existing_File
         catch (IOException ex) {
             //TODO: Log the exception
             assertTrue(ex.getMessage(), false); // Test failed! :-(
-        }    
+        }
+    }
+
+    @Test
+    public void instance_should_output_parsed_data_to_given_file() {
+        try {
+            String fileName = "C:\\Users\\talk2\\Desktop\\Files\\TestOutput.csv";
+            CsvReader reader = new CsvReader(_fileName);
+            reader.saveAsCSV(fileName);
+            File file = new File(fileName);
+            assertTrue(file.exists());
+        }
+        catch (IOException ex) {
+            //TODO: Log the exception
+            assertTrue(ex.getMessage(), false); // Test failed! :-(
+        }
     }
 }

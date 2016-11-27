@@ -5,12 +5,15 @@
 package edu.wcupa.cscclub.projects.martinbrower.reportgenerator.model;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
@@ -205,5 +208,64 @@ public class CsvReader
 
     // </editor-fold>
         
+    // Purely for testing output
+    public void saveAsCSV(String fileName) throws IOException {
+        if(PAGES.isEmpty()) {
+            return;
+        }
+        
+        if(fileName == null || fileName.length() == 0){
+            throw new NullPointerException("The test file name is not set");
+        }
+        
+        FileWriter fileWriter = new FileWriter(fileName);
+        BufferedWriter writer = new BufferedWriter(fileWriter);
+        
+        StringBuilder pageBuilder;
+        for(Page page: PAGES){
+            pageBuilder = new StringBuilder();
+            Iterator iterator = page.SUMMARIES.entrySet().iterator();
+            while(iterator.hasNext()){
+                Map.Entry<String, String> pair = (Map.Entry)iterator.next();
+                pageBuilder.append(String.format("%s:,%s,,", 
+                        pair.getKey(), pair.getValue()));
+            }
+            pageBuilder.append("\n\r");
+            
+            // Builder header row
+            ArrayList<Column> columns = page.getColumns();
+            StringBuilder rowBuilder = new StringBuilder();
+            for(Column column : columns) {                
+                rowBuilder.append(String.format(",%s", column.HEADER.VALUE));                
+            }
+            rowBuilder.append("\n");
+            
+            // Build data rows
+            int cellIndex = 0;
+            int cellCount = columns.get(0).CELLS.size();
+            while(cellIndex < cellCount) {
+                for(Column column : columns){
+                    rowBuilder.append(String.format(",%s", column.CELLS.get(cellIndex).VALUE));
+                }
+                rowBuilder.append("\n");
+                cellIndex++;
+            }
+            pageBuilder.append(rowBuilder.toString());
+            
+            // Build total row
+            pageBuilder.append(String.format("CART TOTAL:,,%s", 
+                    page.getCartTotal()));
+            
+            // Build page row
+            pageBuilder.append(String.format("\n\rPage %s of %s", 
+                    page.getNumber(), PAGES.size()));
+            
+            // Write page to file
+            writer.write(String.format("%s\n\r", pageBuilder.toString()));
+        }
+        writer.flush();
+        writer.close();
+    }
+    
     // </editor-fold>
 }
