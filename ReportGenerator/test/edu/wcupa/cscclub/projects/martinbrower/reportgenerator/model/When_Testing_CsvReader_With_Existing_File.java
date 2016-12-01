@@ -64,7 +64,7 @@ public class When_Testing_CsvReader_With_Existing_File
             CsvReader reader = new CsvReader(_fileName);
             boolean eachColumnHasAtLeastOnceCell = false;
             for (Page page : reader.PAGES) {
-                for (Column column : page.getColumns()) {
+                for (Column column : page.COLUMNS) {
                     eachColumnHasAtLeastOnceCell = column.CELLS.size() > 0;
                 }
             }
@@ -74,24 +74,7 @@ public class When_Testing_CsvReader_With_Existing_File
             //TODO: Log the exception
             assertTrue(ex.getMessage(), false); // Test failed! :-(
         }
-    }
-
-    @Test
-    public void instance_pages_should_each_have_cart_total_above_zero() {
-        try {
-
-            CsvReader reader = new CsvReader(_fileName);
-            boolean eachPageHasACartTotalAboveZero = false;
-            for (Page page : reader.PAGES) {
-                eachPageHasACartTotalAboveZero = page.getCartTotal() > 0;
-            }
-            assertTrue(eachPageHasACartTotalAboveZero);
-        }
-        catch (IOException ex) {
-            //TODO: Log the exception
-            assertTrue(ex.getMessage(), false); // Test failed! :-(
-        }
-    }
+    }    
 
     @Test
     public void instance_should_output_parsed_data_to_given_file() {
