@@ -12,6 +12,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -36,12 +37,13 @@ public class CsvReader
     
     private final String _wantedColumns;    
     private int _rowCount;
+    private final ArrayList<Column> _columns;
     private final BufferedReader _reader;
+    private final Map<String, String> _summaryHeaders;
 
     private Pattern SUMMARY_HEADER_PATTERN;
     private Pattern COLUMN_HEADER_PATTERN;
     private Pattern DATA_ROW_PATTERN;
-    private Pattern CART_TOTAL_PATTERN;
     private Pattern PAGE_NUMBER_PATTERN;
 
     // </editor-fold>
@@ -61,6 +63,8 @@ public class CsvReader
         FileReader reader = new FileReader(fileName);
         _reader = new BufferedReader(reader);
         PAGES = new ArrayList<>();
+        _columns = new ArrayList<>();
+        _summaryHeaders = new HashMap<>();
         
         // In the future, this value could be dynamic
         _wantedColumns = 
@@ -77,10 +81,13 @@ public class CsvReader
     private void initializePatterns() {
         SUMMARY_HEADER_PATTERN = Pattern.compile("\\b(ROUTE|WRIN|TRAILER\\s*(POSITION|POS)|STOP|CASES|DESCRIPTION)\\s*:{1}\\s*\\,+\\w+\\b");
         COLUMN_HEADER_PATTERN = Pattern.compile("^,+(ROUTE|WRIN|TRAILER\\s*(POSITION|POS)|STOP|CASES|DESCRIPTION)+\\,+.*$");
-        DATA_ROW_PATTERN = Pattern.compile("^,*(\\b(?:\\d*\\.)?\\d+\\b\\,+)+\\b(\\w+(\\s|[\\/\\-\\_])?)+\\b\\s*\\,+(\\b(?:\\d*\\.)?\\d+\\b\\,+)\\b\\w+\\b\\,+.*\\b(\\b(?:\\d*\\.)?\\d+\\b)\\,*$");
-        // CART_TOTAL_PATTERN = Pattern.compile("^CART TOTAL\\,*(?:\\d*\\.)?\\d+");
-        CART_TOTAL_PATTERN = Pattern.compile("^CART\\sTOTAL\\,+(?:\\d*\\.)?\\d+(?=\\,+$)|^\\,+(?:\\d*\\.)?\\d+(?=\\,+$)");
+        DATA_ROW_PATTERN = Pattern.compile("^,*(\\b(?:\\d*\\.)?\\d+\\b\\,+)+\\b(\\w+(\\s|[\\/\\-\\_])?)+\\b\\s*\\,+(\\b(?:\\d*\\.)?\\d+\\b\\,+)\\b\\w+\\b\\,+.*\\b(\\b(?:\\d*\\.)?\\d+\\b)\\,*$");        
         PAGE_NUMBER_PATTERN = Pattern.compile("^\\bPage\\s\\d+\\b(?=\\s*of\\,+\\d+\\,+.*$)");
+    }
+    
+    private ArrayList<Column> getColumns() {
+        Collections.sort(_columns);
+        return _columns;
     }
 
     private Map<String, String> getSummaryHeader(String line) {
@@ -104,13 +111,13 @@ public class CsvReader
         }
         return null;
     }
-
-    private boolean updateColumnHeaders(Page page, String line) {
+    
+    private boolean updateColumnHeaders(String line) {
         Matcher matcher = COLUMN_HEADER_PATTERN.matcher(line);
         if (!matcher.matches()) {
             return false;
         }
-
+                
         int column = 0;
         /*
          * I am using String.split() here because it provides
@@ -129,21 +136,21 @@ public class CsvReader
             }
 
             Cell header = new Cell(_rowCount, column, data);
-            page.getColumns().add(new Column(header));
+            _columns.add(new Column(header));
         }
         return true;
-    }
+    }    
 
-    private boolean updatePageColumns(String line, Page page) {
+    private void updateColumns(String line) {
         Matcher matcher = DATA_ROW_PATTERN.matcher(line);
         if (!matcher.matches()) {
-            return false;
+            return;
         }
         // See getColumnHeaders for reasoning behind String.split()
         Queue<String> row
                 = new LinkedList<>(Arrays.asList(matcher.group().split(",")));
         int dataColumn = 0;
-        for (Column column : page.getColumns()) {
+        for (Column column : getColumns()) {
             while (!row.isEmpty()) {
                 String data = row.poll();
                 dataColumn++;
@@ -159,50 +166,37 @@ public class CsvReader
                 break;
             }
         }
-        return true;
     }
 
-    private void updatePage(Page page, String line) {
-        if (updateColumnHeaders(page, line)) {
-            return;
-        }
-
-        if (updatePageColumns(line, page)) {
-            return;
-        }
-
-        Matcher matcher = CART_TOTAL_PATTERN.matcher(line);
-        if (!matcher.find()) {
-            return;
-        }
-        page.setCartTotal(Integer.parseInt(matcher.group()
-            .substring(matcher.group().lastIndexOf(",") + 1)));
-    }
-
-    private void processFile(BufferedReader reader) throws IOException {
-        Page currentPage = null;
+    private void processFile(BufferedReader reader) throws IOException {        
         String line;
         while ((line = _reader.readLine()) != null) {
-            _rowCount++;
-            if (currentPage == null) {
-                currentPage = new Page();
-            }
-
+            _rowCount++;            
             String pageNumber = getPageNumber(line);
-            if (pageNumber != null && pageNumber.length() > 0) {
-                currentPage.setNumber(Integer.parseInt(pageNumber.trim()));
+            if (pageNumber != null && pageNumber.length() > 0) {                
+                // Set up current page
+                Page currentPage = new Page(Integer.parseInt(pageNumber));
+                currentPage.SUMMARIES.putAll(_summaryHeaders);
+                currentPage.COLUMNS.addAll(getColumns());
                 PAGES.add(currentPage);
-                currentPage = null;
+                
+                // clear all variables for the current page
+                _summaryHeaders.clear();
+                _columns.clear();                
                 continue;
             }
 
             Map<String, String> currentSummaryHeaders = getSummaryHeader(line);
             if (currentSummaryHeaders.size() > 0) {
-                currentPage.SUMMARIES.putAll(currentSummaryHeaders);
+                _summaryHeaders.putAll(currentSummaryHeaders);
+                continue;
+            }
+            
+            if (updateColumnHeaders(line)) {
                 continue;
             }
 
-            updatePage(currentPage, line);
+            updateColumns(line);
         }
     }
 
@@ -232,8 +226,9 @@ public class CsvReader
             }
             pageBuilder.append("\n\r");
             
-            // Builder header row
-            ArrayList<Column> columns = page.getColumns();
+            ArrayList<Column> columns = page.COLUMNS;
+            
+            // Builder header row            
             StringBuilder rowBuilder = new StringBuilder();
             for(Column column : columns) {                
                 rowBuilder.append(String.format(",%s", column.HEADER.VALUE));                
@@ -245,25 +240,22 @@ public class CsvReader
             int cellCount = columns.get(0).CELLS.size();
             while(cellIndex < cellCount) {
                 for(Column column : columns){
-                    rowBuilder.append(String.format(",%s", column.CELLS.get(cellIndex).VALUE));
+                    rowBuilder.append(String.format(",%s", 
+                            column.CELLS.get(cellIndex).VALUE));
                 }
                 rowBuilder.append("\n");
                 cellIndex++;
             }
             pageBuilder.append(rowBuilder.toString());
-            
-            // Build total row
-            pageBuilder.append(String.format("CART TOTAL:,,%s", 
-                    page.getCartTotal()));
-            
+                        
             // Build page row
-            pageBuilder.append(String.format("\n\rPage %s of %s", 
-                    page.getNumber(), PAGES.size()));
+            pageBuilder.append(String.format("\nPage %s of %s", 
+                    page.NUMBER, PAGES.size()));
             
             // Write page to file
             writer.write(String.format("%s\n\r", pageBuilder.toString()));
         }
-        writer.flush();
+        
         writer.close();
     }
     
