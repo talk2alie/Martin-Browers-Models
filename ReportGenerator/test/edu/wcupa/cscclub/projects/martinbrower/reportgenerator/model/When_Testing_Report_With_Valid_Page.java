@@ -15,12 +15,12 @@ import org.junit.Test;
  */
 public class When_Testing_Report_With_Valid_Page {
 
-    private CsvReader reader;
+    private PaletteManager reader;
     String _fileName = "C:\\Users\\talk2\\Desktop\\Files\\BunManifest2.csv";
     
     @Test
     public void instance_should_have_at_least_one_page() throws IOException{
-        ArrayList<Page> pages = new CsvReader(_fileName).PAGES;
+        ArrayList<Page> pages = new PaletteManager(_fileName).PAGES;
         for(Page page : pages){
             Report report = new Report(page);
             int cases = report.getCaseCount();

@@ -124,7 +124,7 @@ public class Cases implements Comparable<Cases>
      * @param contentId the _contentId to set
      */
     public void setContentId(String contentId) {
-        _contentId = _contentId;
+        _contentId = contentId;
     }
 
     /**

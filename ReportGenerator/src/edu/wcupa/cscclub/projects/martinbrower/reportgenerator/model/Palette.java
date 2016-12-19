@@ -13,29 +13,35 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Palette
 {
-    private final ArrayList<Cases> _cases;
+
+    /**
+     * Gets a list of all cases that are in this palette
+     */
+    public final ArrayList<Cases> CASES;
     private int _caseCount; // Number of cases in palette
     private final int MAX_CASE_COUNT = 21;
-    
+    private int _referencePage;
+
     /**
-     * The position within the trailer where this palette will be placed
+     * Gets the position within the trailer where this palette will be placed
      */
     public final String TRAILER_POSITION;
-    
+
     /**
-     * A unique identifier of this palette
+     * Gets a unique identifier for this palette
      */
     public final String ID;
 
     /**
      * Create a new palette in the given trailer position
-     * @param trailerPosition - The position within the trailer where 
-     * this palette will be positioned
+     *
+     * @param trailerPosition - The position within the trailer where
+     *                        this palette will be positioned
      */
     public Palette(String trailerPosition) {
         TRAILER_POSITION = trailerPosition;
         ID = trailerPosition + UUID.randomUUID().toString();
-        _cases = new ArrayList<>(21);
+        CASES = new ArrayList<>(21);
     }
 
     /**
@@ -52,18 +58,29 @@ public class Palette
 
         AtomicReference<Integer> index = new AtomicReference<>(-1);
         Cases entry = findCases(cases.getId(), index);
-        if (entry == null) { // This palette has no entry for these cases
-            cases.moveToPalette(ID);
-            _cases.add(cases);
-            _caseCount += cases.getQuantity();
-            return null;
+        if (entry == null) { // This palette has no entry for these cases            
+            if ((_caseCount + cases.getQuantity()) <= MAX_CASE_COUNT) {
+                cases.moveToPalette(ID);
+                CASES.add(cases);
+                _caseCount += cases.getQuantity();
+                return null;
+            }
+            int acceptableCasesCount = MAX_CASE_COUNT - _caseCount;
+            Cases acceptableCases = new Cases(cases.getRoute(),
+                    cases.getStop(), acceptableCasesCount, cases.getContent(),
+                    cases.getContentId(), ID);
+            CASES.add(acceptableCases);
+            _caseCount += acceptableCasesCount;
+            cases.decreaseQuantityBy(acceptableCasesCount);
+            return cases;
         }
 
-        int acceptableCases = MAX_CASE_COUNT - _caseCount;
-        entry.increaseQuantityBy(acceptableCases);
-        _cases.set(index.get(), entry); // update the cases in the palette        
-        _caseCount += acceptableCases;
-        cases.decreaseQuantityBy(acceptableCases);
+        // These cases already exist in this palette
+        int acceptableCasesCount = MAX_CASE_COUNT - _caseCount;
+        entry.increaseQuantityBy(acceptableCasesCount);
+        CASES.set(index.get(), entry); // update the cases in the palette        
+        _caseCount += acceptableCasesCount;
+        cases.decreaseQuantityBy(acceptableCasesCount);
         return cases;
     }
 
@@ -88,25 +105,48 @@ public class Palette
 
         entry.decreaseQuantityBy(count);
         _caseCount -= count;
-        _cases.set(index.get(), entry);
+        CASES.set(index.get(), entry);
         return new Cases(entry.getRoute(), entry.getStop(), count,
-                entry.getContent(), entry.getContentId(), entry.getPaletteId());
+                entry.getContent(), entry.getContentId(), "");
     }
 
     /**
      * Searches this palette for cases with the given casesId
+     *
      * @param casesId - The unique identifier of the cases to find
-     * @param index - The starting position within the palette (counting from 
-     * 0, top to bottom), where these cases can be found
-     * @return 
+     * @param index   - The starting position within the palette (counting from
+     *                0, top to bottom), where these cases can be found
+     * @return
      */
     public Cases findCases(String casesId, AtomicReference<Integer> index) {
-        for (int i = 0; i < _cases.size(); ++i) {
-            if (_cases.get(i).getId().equals(casesId)) {
+        for (int i = 0; i < CASES.size(); ++i) {
+            if (CASES.get(i).getId().equals(casesId)) {
                 index.set(i);
-                return _cases.get(i);
+                return CASES.get(i);
             }
         }
         return null;
+    }
+
+    /**
+     * Gets the page from the CSV file where data for this palette
+     * was collected
+     *
+     * @return the page, in the CSV file, from which data for this
+     *         palette was collected
+     */
+    public int getReferencePage() {
+        return _referencePage;
+    }
+
+    /**
+     * Sets the page in the CSV file from which data for this palette
+     * was collected
+     *
+     * @param referencePage - The page in the CSV file where data for this
+     *                      palette was collected
+     */
+    public void setReferencePage(int referencePage) {
+        _referencePage = referencePage;
     }
 }

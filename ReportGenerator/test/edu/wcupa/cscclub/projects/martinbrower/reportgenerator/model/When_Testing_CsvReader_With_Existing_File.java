@@ -1,5 +1,5 @@
 /*
- * Tests for the CsvReader in good situations
+ * Tests for the PaletteManager in good situations
  */
 package edu.wcupa.cscclub.projects.martinbrower.reportgenerator.model;
 
@@ -33,7 +33,7 @@ public class When_Testing_CsvReader_With_Existing_File
     @Test
     public void instance_should_be_created() {
         try {
-            CsvReader csvReader = new CsvReader(_fileName);
+            PaletteManager csvReader = new PaletteManager(_fileName);
             assertTrue(true); // Instance created; therefore, test passed!
         }
         catch (FileNotFoundException ex) {
@@ -49,7 +49,7 @@ public class When_Testing_CsvReader_With_Existing_File
     public void instance_page_count_should_equal_page_count_in_file() {
         try {
 
-            CsvReader reader = new CsvReader(_fileName);
+            PaletteManager reader = new PaletteManager(_fileName);
             assertEquals(_expectedPageCount, reader.PAGES.size());
         }
         catch (IOException ex) {
@@ -62,7 +62,7 @@ public class When_Testing_CsvReader_With_Existing_File
     public void instance_pages_should_each_have_at_least_one_cell_in_their_columns() {
         try {
 
-            CsvReader reader = new CsvReader(_fileName);
+            PaletteManager reader = new PaletteManager(_fileName);
             boolean eachColumnHasAtLeastOnceCell = false;
             for (Page page : reader.PAGES) {
                 for (Column column : page.COLUMNS) {
@@ -81,7 +81,7 @@ public class When_Testing_CsvReader_With_Existing_File
     public void instance_should_output_parsed_data_to_given_file() {
         try {
             String fileName = "C:\\Users\\talk2\\Desktop\\Files\\TestOutput.csv";
-            CsvReader reader = new CsvReader(_fileName);
+            PaletteManager reader = new PaletteManager(_fileName);
             reader.saveAsCSV(fileName);
             File file = new File(fileName);
             assertTrue(file.exists());
