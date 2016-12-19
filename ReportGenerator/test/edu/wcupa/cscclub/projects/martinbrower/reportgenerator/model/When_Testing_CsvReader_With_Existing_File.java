@@ -22,7 +22,8 @@ public class When_Testing_CsvReader_With_Existing_File
     private final boolean _expectCartTotal;
 
     public When_Testing_CsvReader_With_Existing_File() {
-        _fileName = "C:\\Users\\talk2\\Desktop\\Files\\BunManifest2.csv";
+          _fileName = "C:\\Users\\talk2\\Desktop\\Files\\112816a.csv";
+//        _fileName = "C:\\Users\\talk2\\Desktop\\Files\\BunManifest2.csv";
         _expectedPageCount = 90;
 //        _fileName = "C:\\Users\\talk2\\Desktop\\Files\\Report1.csv";
 //        _expectedPageCount = 295;
@@ -86,7 +87,7 @@ public class When_Testing_CsvReader_With_Existing_File
             assertTrue(file.exists());
         }
         catch (IOException ex) {
-            //TODO: Log the exception
+            //TODO: Log the exception           
             assertTrue(ex.getMessage(), false); // Test failed! :-(
         }
     }
