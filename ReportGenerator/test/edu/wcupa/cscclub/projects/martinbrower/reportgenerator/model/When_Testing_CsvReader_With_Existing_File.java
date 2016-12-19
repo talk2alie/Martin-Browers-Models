@@ -82,7 +82,22 @@ public class When_Testing_CsvReader_With_Existing_File
         try {
             String fileName = "C:\\Users\\talk2\\Desktop\\Files\\TestOutput.csv";
             PaletteManager reader = new PaletteManager(_fileName);
-            reader.saveAsCSV(fileName);
+            reader.saveAsCsv(fileName);
+            File file = new File(fileName);
+            assertTrue(file.exists());
+        }
+        catch (IOException ex) {
+            //TODO: Log the exception           
+            assertTrue(ex.getMessage(), false); // Test failed! :-(
+        }
+    }
+    
+    @Test
+    public void instance_should_output_palettes_to_given_file() {
+        try {
+            String fileName = "C:\\Users\\talk2\\Desktop\\Files\\palettes.csv";
+            PaletteManager reader = new PaletteManager(_fileName);
+            reader.saveAllPalettesAsCsv(fileName);
             File file = new File(fileName);
             assertTrue(file.exists());
         }

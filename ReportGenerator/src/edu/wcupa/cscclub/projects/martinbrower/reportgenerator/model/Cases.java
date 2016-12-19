@@ -131,7 +131,7 @@ public class Cases implements Comparable<Cases>
      * @return the _id
      */
     public String getId() {
-        return _contentId + _stop;
+        return _stop + _contentId;
     }
 
     /**

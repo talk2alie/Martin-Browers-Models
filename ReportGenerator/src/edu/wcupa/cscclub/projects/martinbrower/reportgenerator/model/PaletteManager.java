@@ -35,8 +35,8 @@ public class PaletteManager
      */
     public final ArrayList<Page> PAGES;
     public final ArrayList<Palette> PALETTES;
-    private final Queue<Cases> _casesOnCurrentPage;
-    private final ArrayList<Palette> _palettesOnCurentPage;
+    private final Queue<Cases> _cases;
+    private ArrayList<Palette> _palettes;
 
     private final String _wantedColumns;
     private int _rowCount;
@@ -68,8 +68,8 @@ public class PaletteManager
         PALETTES = new ArrayList<>();
         _columns = new ArrayList<>();
         _summaryHeaders = new HashMap<>();
-        _casesOnCurrentPage = new LinkedList<>();
-        _palettesOnCurentPage = new ArrayList<>(_maxPalettesPerPage);
+        _cases = new LinkedList<>();
+        _palettes = new ArrayList<>(_maxPalettesPerPage);
 
         // In the future, this value could be dynamic
         _wantedColumns
@@ -172,12 +172,12 @@ public class PaletteManager
                 break;
             }
         }
-        
+
         if (cases.getRoute().equals("")) {
             String route = _summaryHeaders.get("ROUTE");
             cases.setRoute(route);
         }
-        _casesOnCurrentPage.add(cases);
+        _cases.add(cases);
     }
 
     private void processCases(Column column, Cases cases, String data)
@@ -201,10 +201,66 @@ public class PaletteManager
             case "trailer":
             case "trailer pos":
             case "trailer position":
-                if(_palettesOnCurentPage.size() < _maxPalettesPerPage){
-                    _palettesOnCurentPage.add(new Palette(data));
+                if (_palettes.size() < _maxPalettesPerPage) {
+                    _palettes.add(new Palette(data));
                 }
         }
+    }
+
+    private void buildPalettes(Page currentPage) {
+        // Ensure that there are at least two palettes per page
+        while (_palettes.size() < _maxPalettesPerPage) {
+            _palettes.add(new Palette(
+                    _palettes.get(0).TRAILER_POSITION));
+        }
+
+        Cases remainder = null;
+        for (Palette palette : _palettes) {
+            if (remainder != null) {
+                // Add the remaining cases to the next palette
+                palette.addCases(remainder);
+            }
+
+            while (!_cases.isEmpty()) {
+                Cases cases = _cases.poll();
+                remainder = palette.addCases(cases);
+                if (remainder != null) {
+                    break;
+                }
+            }
+
+            if (palette.CASES.size() > 0) {
+                palette.setReferencePage(currentPage.NUMBER);
+            }
+        }
+
+        for (int i = 0; i < _maxPalettesPerPage; ++i) {
+            if (_palettes.get(i).CASES.isEmpty()) {
+                _palettes.remove(i);
+            }
+        }
+    }
+
+    private ArrayList<Palette> stackCases(ArrayList<Palette> palettes,
+            int difference) {
+
+        if (difference == 0 || difference == 1) {
+            return palettes;
+        }
+
+        if ((difference < 6 && difference > 1) 
+                && palettes.get(0).getCaseCount() == 1) {
+            return palettes;
+        }
+
+        String lastCaseId = palettes.get(0).getLastCaseId();
+        Cases cases = palettes.get(0).removeCases(lastCaseId, 1);
+        palettes.get(1).addCases(cases);
+
+        int newDifference = palettes.get(0).getCaseCount()
+                - palettes.get(1).getCaseCount();
+
+        return stackCases(palettes, newDifference);
     }
 
     private void processFile(BufferedReader reader) throws IOException {
@@ -222,36 +278,20 @@ public class PaletteManager
                 // clear all variables for the current page
                 _summaryHeaders.clear();
                 _columns.clear();
-
-                // Build Palettes
-                Cases remainder = null;
-                while(_palettesOnCurentPage.size() < _maxPalettesPerPage){                    
-                    _palettesOnCurentPage.add(new Palette(
-                            _palettesOnCurentPage.get(0).TRAILER_POSITION));
+                buildPalettes(currentPage);
+                if (_palettes.size() == 1) {
+                    PALETTES.add(_palettes.get(0));
                 }
-                for (Palette palette : _palettesOnCurentPage) {
-                    if (remainder != null) {
-                        // Add the remaining cases to the next palette
-                        palette.addCases(remainder);
-                    }
-
-                    while (!_casesOnCurrentPage.isEmpty()) {
-                        Cases cases = _casesOnCurrentPage.poll();
-                        remainder = palette.addCases(cases);
-                        if (remainder != null) {
-                            break;
-                        }
-                    }
-                    
-                    if(palette.CASES.size() > 0){
-                        palette.setReferencePage(currentPage.NUMBER);
+                else {
+                    int difference = _palettes.get(0).getCaseCount()
+                            - _palettes.get(1).getCaseCount();
+                    _palettes = stackCases(_palettes, difference);
+                    for (Palette palette : _palettes) {
+                        PALETTES.add(palette);
                     }
                 }
-                
-                // Add symmetry to palettes and add them to the palette manager
-                
-                _palettesOnCurentPage.clear();
-                _casesOnCurrentPage.clear();
+
+                _palettes.clear();
                 continue;
             }
 
@@ -271,12 +311,10 @@ public class PaletteManager
 
     // </editor-fold>
     // Purely for testing output
-    public void saveAsCSV(String fileName) throws IOException {
+    public void saveAsCsv(String fileName) throws IOException {
         if (PAGES.isEmpty()) {
             return;
         }
-        
-        System.out.println(PALETTES);
 
         if (fileName == null || fileName.length() == 0) {
             throw new NullPointerException("The test file name is not set");
@@ -329,5 +367,25 @@ public class PaletteManager
         writer.close();
     }
 
+    public void saveAllPalettesAsCsv(String fileName) throws IOException {
+        if (PALETTES.isEmpty()) {
+            return;
+        }
+
+        if (fileName == null || fileName.length() == 0) {
+            throw new NullPointerException("The test file name is not set");
+        }
+        
+        FileWriter fileWriter = new FileWriter(fileName);
+        BufferedWriter writer = new BufferedWriter(fileWriter);
+        
+        for(Palette palette : PALETTES) {
+            writer.write(palette.getManifestAsCsv());
+            writer.write("\n");
+        }
+        
+        writer.close();
+    }
+    
     // </editor-fold>
 }

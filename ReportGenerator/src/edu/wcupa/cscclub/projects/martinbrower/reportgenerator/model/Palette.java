@@ -5,6 +5,7 @@
 package edu.wcupa.cscclub.projects.martinbrower.reportgenerator.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -15,7 +16,7 @@ public class Palette
 {
 
     /**
-     * Gets a list of all cases that are in this palette
+     * Gets a list of all the different kinds of cases in this palette
      */
     public final ArrayList<Cases> CASES;
     private int _caseCount; // Number of cases in palette
@@ -77,8 +78,15 @@ public class Palette
 
         // These cases already exist in this palette
         int acceptableCasesCount = MAX_CASE_COUNT - _caseCount;
+        if (acceptableCasesCount >= cases.getQuantity()) {
+            entry.increaseQuantityBy(cases.getQuantity());
+            CASES.set(index.get(), entry); // update the cases in the palette  
+            _caseCount += cases.getQuantity();
+            return null;
+        }
+
         entry.increaseQuantityBy(acceptableCasesCount);
-        CASES.set(index.get(), entry); // update the cases in the palette        
+        CASES.set(index.get(), entry); // update the cases in the palette  
         _caseCount += acceptableCasesCount;
         cases.decreaseQuantityBy(acceptableCasesCount);
         return cases;
@@ -105,7 +113,12 @@ public class Palette
 
         entry.decreaseQuantityBy(count);
         _caseCount -= count;
-        CASES.set(index.get(), entry);
+        if (entry.getQuantity() > 0) {
+            CASES.set(index.get().intValue(), entry);
+        }
+        else {
+            CASES.remove(index.get().intValue());
+        }
         return new Cases(entry.getRoute(), entry.getStop(), count,
                 entry.getContent(), entry.getContentId(), "");
     }
@@ -148,5 +161,67 @@ public class Palette
      */
     public void setReferencePage(int referencePage) {
         _referencePage = referencePage;
+    }
+
+    /**
+     * Gets the total number of cases in this palette
+     *
+     * @return the number of cases in this palette
+     */
+    public int getCaseCount() {
+        return _caseCount;
+    }
+
+    /**
+     * Gets the ID of the last cases in this palette
+     *
+     * @return
+     */
+    public String getLastCaseId() {
+        if (CASES.isEmpty()) {
+            return null;
+        }
+
+        return CASES.get(CASES.size() - 1).getId();
+    }
+
+    /**
+     * Gets a sorted list of all cases in this palette
+     *
+     * @return the sorted list of cases
+     */
+    public ArrayList<Cases> getSortedCaseList() {
+        Collections.sort(CASES);
+        return CASES;
+    }
+
+    /**
+     * Gets this palette's manifest in the form of a CSV content
+     *
+     * @return the CSV of this palette's manifest
+     */
+    public String getManifestAsCsv() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(",STOP,CASES,DESCRIPTION,WRIN,TRAILER,ROUTE\n");
+        for (Cases cases : getSortedCaseList()) {
+            builder.append(",")
+                    .append(cases.getStop())
+                    .append(",")
+                    .append(cases.getQuantity())
+                    .append(",")
+                    .append(cases.getContent())
+                    .append(",")
+                    .append(cases.getContentId())
+                    .append(",")
+                    .append(TRAILER_POSITION)
+                    .append(",")
+                    .append(cases.getRoute())
+                    .append("\n");
+
+        }
+        builder.append("CART TOTAL:,,").append(_caseCount).append("\n");
+
+        return builder.toString();
     }
 }
